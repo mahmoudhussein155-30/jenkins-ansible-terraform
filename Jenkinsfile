@@ -50,7 +50,7 @@ pipeline {
                     // Create dynamic inventory and run playbook
                     sh """
                     echo "[web]" > inventory
-                    echo "${EC2_IP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
+                    echo "${EC2_IP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/sec.pem ansible_python_interpreter=/usr/bin/python3" >> inventory
                     ansible-playbook -i inventory ansible/install_nginx.yml
                     """
                 }
