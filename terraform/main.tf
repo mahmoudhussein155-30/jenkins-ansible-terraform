@@ -1,9 +1,15 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
+}
+
+resource "aws_key_pair" "deployer" {
+  key_name   = "jenkins-key"
+  public_key = file(var.public_key_path)
 }
 
 resource "aws_security_group" "jenkins_sg" {
-  name = "jenkins_sg"
+  name        = "jenkins_sg"
+  description = "Allow SSH and HTTP"
 
   ingress {
     from_port   = 22
@@ -27,42 +33,14 @@ resource "aws_security_group" "jenkins_sg" {
   }
 }
 
+resource "aws_instance" "ubuntu_ec2" {
+  ami           = "ami-053b0d53c279acc90" # Ubuntu 22.04 (us-east-1)
+  instance_type = "t2.micro"
 
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
-
-  filter {
-    name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
-  }
-}
-
-resource "aws_instance" "web" {
-  ami           = data.aws_ami.ubuntu.id
-
-  instance_type = "t3.micro"
-  key_name      = "sec"
-
+  key_name               = aws_key_pair.deployer.key_name
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
 
-user_data = <<-EOF
-  #!/bin/bash
-  # Update OS
-  yum update -y
-
-  # Enable Python 3.9 extra and install it
-  amazon-linux-extras enable python3.9 -y
-  yum install -y python3.9 python3.9-venv python3.9-pip
-
-  # Make sure python3 points to python3.9
-  alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
-EOF
-
   tags = {
-    Name = "jenkins-ec2"
-
-
-
+    Name = "Ubuntu-Ansible-Server"
   }
 }

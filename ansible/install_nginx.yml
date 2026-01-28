@@ -1,5 +1,5 @@
-- hosts: all
-
+- name: Install Nginx
+  hosts: all
   become: yes
 
   tasks:
@@ -12,7 +12,7 @@
         name: nginx
         state: present
 
-    - name: Start Nginx
+    - name: Start nginx
       service:
         name: nginx
         state: started
