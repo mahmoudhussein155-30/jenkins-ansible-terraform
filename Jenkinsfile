@@ -38,29 +38,27 @@ pipeline {
                         script: "cd terraform && terraform output -raw public_ip",
                         returnStdout: true
                     ).trim()
-
-                    echo "EC2 Public IP: ${env.EC2_IP}"
                 }
             }
         }
 
-        stage('Deploy Nginx with Ansible') {
+        stage('Deploy Nginx') {
             steps {
                 script {
-                    sh """
-                    echo "[web]" > inventory
-                    echo "${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/jenkins_home/sec.pem ansible_python_interpreter=/usr/bin/python3" >> inventory
+                    // Use the Jenkins credential for the SSH private key
+                    withCredentials([sshUserPrivateKey(credentialsId: 'jenkins-ssh', keyFileVariable: 'SSH_KEY')]) {
 
-                    ansible-playbook -i inventory ansible/install_nginx.yml
-                    """
+                        // Create dynamic Ansible inventory
+                        sh """
+                        echo "[web]" > ansible/inventory
+                        echo "\$EC2_IP ansible_user=ubuntu ansible_ssh_private_key_file=\$SSH_KEY ansible_python_interpreter=/usr/bin/python3" >> ansible/inventory
+
+                        // Run Ansible playbook
+                        ansible-playbook -i ansible/inventory ansible/install_nginx.yml
+                        """
+                    }
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            echo "Pipeline Finished"
         }
     }
 }
