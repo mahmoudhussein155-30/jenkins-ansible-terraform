@@ -41,7 +41,7 @@ pipeline {
                 }
             }
         }
-        pipeline {
+pipeline {
     agent any
     stages {
         stage('Deploy Nginx') {
