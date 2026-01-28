@@ -40,7 +40,7 @@ data "aws_ami" "ubuntu" {
 
 resource "aws_instance" "web" {
   ami           = data.aws_ami.ubuntu.id
->>>>>>> 8191eeb (Switch from Amazon Linux to Ubuntu 22.04)
+
   instance_type = "t3.micro"
   key_name      = "sec"
 
