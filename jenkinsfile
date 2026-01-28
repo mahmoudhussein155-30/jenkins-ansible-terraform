@@ -4,9 +4,16 @@ pipeline {
     environment {
         AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+        AWS_DEFAULT_REGION    = "us-east-1"
     }
 
     stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
 
         stage('Terraform Init') {
             steps {
@@ -27,22 +34,22 @@ pipeline {
         stage('Get Public IP') {
             steps {
                 script {
-                    def ip = sh(
+                    env.EC2_IP = sh(
                         script: "cd terraform && terraform output -raw public_ip",
                         returnStdout: true
                     ).trim()
-
-                    writeFile file: 'ansible/inventory', text: """
-[servers]
-${ip} ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/your-key.pem
-"""
                 }
             }
         }
 
         stage('Run Ansible') {
             steps {
-                sh 'ansible-playbook -i ansible/inventory ansible/install_nginx.yml'
+                sh """
+                echo "[web]" > inventory
+                echo "${EC2_IP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
+
+                ansible-playbook -i inventory ansible/install_nginx.yml
+                """
             }
         }
     }
