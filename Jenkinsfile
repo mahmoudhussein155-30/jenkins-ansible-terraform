@@ -5,6 +5,7 @@ pipeline {
         AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
         AWS_DEFAULT_REGION    = "us-east-1"
+        ANSIBLE_CONFIG        = "$WORKSPACE/ansible.cfg"
     }
 
     stages {
@@ -38,40 +39,23 @@ pipeline {
                         script: "cd terraform && terraform output -raw public_ip",
                         returnStdout: true
                     ).trim()
+                    echo "EC2 Public IP: ${env.EC2_IP}"
                 }
             }
         }
-pipeline {
-    agent any
-    stages {
-        stage('Deploy Nginx') {
+
+        stage('Deploy Nginx with Ansible') {
             steps {
                 script {
-                    // Ensure ansible uses the correct config
-                    sh 'export ANSIBLE_CONFIG=$WORKSPACE/ansible.cfg'
-
-                    // Run playbook dynamically
-                    sh '''
+                    // Create dynamic inventory and run playbook
+                    sh """
                     echo "[web]" > inventory
-                    echo "$EC2_IP ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
+                    echo "${EC2_IP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
                     ansible-playbook -i inventory ansible/install_nginx.yml
-                    '''
+                    """
                 }
             }
         }
-    }
-}
 
-
-        stage('Run Ansible') {
-            steps {
-                sh """
-                echo "[web]" > inventory
-                echo "${EC2_IP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
-
-                ansible-playbook -i inventory ansible/install_nginx.yml
-                """
-            }
-        }
     }
 }
