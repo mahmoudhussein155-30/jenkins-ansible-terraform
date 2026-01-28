@@ -12,20 +12,29 @@ pipeline {
                 checkout scm
             }
         }
+        stage('Debug Files') {
+            steps {
+                sh 'ls -R'
+            }
+        }
 
         stage('Terraform Init') {
             steps {
+                dir('terraform') {
                 sh 'terraform init'
+                }
             }
         }
 
         stage('Terraform Apply') {
             steps {
-                withCredentials([[
-                    $class: 'AmazonWebServicesCredentialsBinding',
-                    credentialsId: 'aws-creds'
-                ]]) {
-                    sh 'terraform apply -auto-approve'
+                dir('terraform') {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-creds'
+                    ]]) {
+                        sh 'terraform apply -auto-approve'
+                    }
                 }
             }
         }
@@ -34,7 +43,7 @@ pipeline {
             steps {
                 script {
                     def ip = sh(
-                        script: "terraform output -raw public_ip",
+                        script: "cd terraform && terraform output -raw public_ip",
                         returnStdout: true
                     ).trim()
 
