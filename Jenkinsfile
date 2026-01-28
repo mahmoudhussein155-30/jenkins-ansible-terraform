@@ -43,6 +43,20 @@ pipeline {
                 }
             }
         }
+        
+        stage('Bootstrap Python') {
+            steps {
+                script {
+                    sh """
+                    echo "[web]" > inventory
+                    echo "${EC2_IP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
+
+                    ansible -i inventory all -m raw -a "which python3 || sudo amazon-linux-extras enable python3.7 && sudo yum install -y python3"
+                    """
+                }
+            }
+        }
+
 
         stage('Deploy Nginx with Ansible') {
             steps {
