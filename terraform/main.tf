@@ -29,7 +29,7 @@ resource "aws_security_group" "jenkins_sg" {
 
 resource "aws_instance" "jenkins_ec2" {
   ami           = "ami-0c02fb55956c7d316"
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
   key_name      = "sec"
 
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
