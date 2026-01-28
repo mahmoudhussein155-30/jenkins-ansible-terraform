@@ -1,24 +1,26 @@
-# First play: ensure python3 is installed using raw module
 - hosts: all
   gather_facts: no
   tasks:
-    - name: Ensure python3 is installed
+    - name: Ensure python3 is installed (raw)
       raw: |
         if ! command -v python3 >/dev/null 2>&1; then
           sudo amazon-linux-extras enable python3.7
           sudo yum install -y python3
         fi
 
-# Second play: now use python3 for ansible modules
 - hosts: all
   gather_facts: yes
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
+    - name: Ping using python3
+      ping:
+
     - name: Install Nginx
       yum:
         name: nginx
         state: present
+
     - name: Start Nginx
       service:
         name: nginx
