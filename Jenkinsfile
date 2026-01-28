@@ -2,7 +2,9 @@ pipeline {
     agent any
 
     environment {
-        AWS_DEFAULT_REGION = "us-east-1"
+        AWS_ACCESS_KEY_ID     = credentials('aws-access-key')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-key')
+        AWS_DEFAULT_REGION    = "us-east-1"
     }
 
     stages {
@@ -12,16 +14,11 @@ pipeline {
                 checkout scm
             }
         }
-        stage('Debug Files') {
-            steps {
-                sh 'ls -R'
-            }
-        }
 
         stage('Terraform Init') {
             steps {
                 dir('terraform') {
-                sh 'terraform init'
+                    sh 'terraform init'
                 }
             }
         }
@@ -29,12 +26,7 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 dir('terraform') {
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'aws-creds'
-                    ]]) {
-                        sh 'terraform apply -auto-approve'
-                    }
+                    sh 'terraform apply -auto-approve'
                 }
             }
         }
@@ -42,39 +34,33 @@ pipeline {
         stage('Get Public IP') {
             steps {
                 script {
-                    def ip = sh(
+                    env.EC2_IP = sh(
                         script: "cd terraform && terraform output -raw public_ip",
                         returnStdout: true
                     ).trim()
 
-                    env.EC2_IP = ip
-                    echo "EC2 IP is ${env.EC2_IP}"
+                    echo "EC2 Public IP: ${env.EC2_IP}"
                 }
             }
         }
 
-        stage('Create Inventory') {
+        stage('Deploy Nginx with Ansible') {
             steps {
-                sh """
-                echo "[web]" > inventory
-                echo "${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
-                """
+                script {
+                    sh """
+                    echo "[web]" > inventory
+                    echo "${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/jenkins_home/sec.pem ansible_python_interpreter=/usr/bin/python3" >> inventory
+
+                    ansible-playbook -i inventory ansible/install_nginx.yml
+                    """
+                }
             }
         }
+    }
 
-        stage('Wait for SSH') {
-            steps {
-                sh """
-                echo "Waiting for EC2 to be ready..."
-                sleep 40
-                """
-            }
-        }
-
-        stage('Run Ansible') {
-            steps {
-                sh 'ansible-playbook -i inventory ansible/install_nginx.yml'
-            }
+    post {
+        always {
+            echo "Pipeline Finished"
         }
     }
 }
