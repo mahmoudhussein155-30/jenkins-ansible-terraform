@@ -37,11 +37,18 @@ resource "aws_instance" "jenkins_ec2" {
   tags = {
     Name = "jenkins-ec2"
 
-  user_data = <<-EOF
-              #!/bin/bash
-              # Install Python 3.9
-              amazon-linux-extras enable python3.9
-              yum install -y python3.9 python3.9-venv python3.9-pip
-              EOF
+user_data = <<-EOF
+  #!/bin/bash
+  # Update OS
+  yum update -y
+
+  # Enable Python 3.9 extra and install it
+  amazon-linux-extras enable python3.9 -y
+  yum install -y python3.9 python3.9-venv python3.9-pip
+
+  # Make sure python3 points to python3.9
+  alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
+EOF
+
   }
 }
