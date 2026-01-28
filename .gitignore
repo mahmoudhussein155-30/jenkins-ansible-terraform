@@ -1,0 +1,3 @@
+# Ignore SSH private key
+sec
+*.pem
