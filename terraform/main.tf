@@ -34,9 +34,6 @@ resource "aws_instance" "jenkins_ec2" {
 
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
 
-  tags = {
-    Name = "jenkins-ec2"
-
 user_data = <<-EOF
   #!/bin/bash
   # Update OS
@@ -49,6 +46,11 @@ user_data = <<-EOF
   # Make sure python3 points to python3.9
   alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 2
 EOF
+
+  tags = {
+    Name = "jenkins-ec2"
+
+
 
   }
 }
