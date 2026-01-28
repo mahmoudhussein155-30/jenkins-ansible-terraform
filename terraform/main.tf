@@ -35,7 +35,7 @@ resource "aws_security_group" "jenkins_sg" {
 
 resource "aws_instance" "ubuntu_ec2" {
   ami           = "ami-053b0d53c279acc90" # Ubuntu 22.04 (us-east-1)
-  instance_type = "t2.micro"
+  instance_type = "t3.micro"
 
   key_name               = aws_key_pair.deployer.key_name
   vpc_security_group_ids = [aws_security_group.jenkins_sg.id]
