@@ -44,7 +44,8 @@ pipeline {
                     // Create dynamic inventory
                     sh """
                     echo "[web]" > inventory
-                    echo "${EC2_IP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
+
+                    echo "${EC2_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/jenkins_home/sec.pem" >> inventory
                     """
 
                     // Run the playbook

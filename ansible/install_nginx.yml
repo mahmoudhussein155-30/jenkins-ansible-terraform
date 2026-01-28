@@ -1,23 +1,14 @@
 - hosts: all
-  gather_facts: no
-  tasks:
-    - name: Ensure python3 is installed (raw)
-      raw: |
-        if ! command -v python3 >/dev/null 2>&1; then
-          sudo amazon-linux-extras enable python3.7
-          sudo yum install -y python3
-        fi
 
-- hosts: all
-  gather_facts: yes
-  vars:
-    ansible_python_interpreter: /usr/bin/python3
-  tasks:
-    - name: Ping using python3
-      ping:
+  become: yes
 
-    - name: Install Nginx
-      yum:
+  tasks:
+    - name: Update apt
+      apt:
+        update_cache: yes
+
+    - name: Install nginx
+      apt:
         name: nginx
         state: present
 

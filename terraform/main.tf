@@ -27,8 +27,20 @@ resource "aws_security_group" "jenkins_sg" {
   }
 }
 
-resource "aws_instance" "jenkins_ec2" {
-  ami           = "ami-0c02fb55956c7d316"
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+}
+
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.ubuntu.id
+>>>>>>> 8191eeb (Switch from Amazon Linux to Ubuntu 22.04)
   instance_type = "t3.micro"
   key_name      = "sec"
 
